@@ -40,7 +40,7 @@ make_table1 <- function(vars, group, data, mean_sd = TRUE, overall = TRUE) {
      }
 }
 
-# Function for LM + Residual Plots
+# Function for LM + Diagnostic Plots
 run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL) {
      model <- lm(formula, data = data)
      
@@ -49,12 +49,13 @@ run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL
      print(confint(model))
      
      if(show_visualizations) {
-          # Residual plots
-          par(mfrow = c(1,3))
+          # Diagnostic plots
+          par(mfrow = c(1,4))
+          plot(model, which = 1, add.smooth = FALSE)
           hist(residuals(model), main = "Histogram of Residuals", xlab = "Residuals", freq = FALSE)
           qqnorm(residuals(model), main = "Q-Q Plot of Residuals")
           qqline(residuals(model), lwd = 1)
-          plot(model, which = 3)
+          plot(model, which = 3, add.smooth = FALSE)
           par(mfrow = c(1,1))
           
           # Optional 2D visreg plot
@@ -212,21 +213,25 @@ print(scatter01)
 #### 5. "Overall" Regression Analyses ####
 
 ##### Model01 ####
-Model01 <- run_lm(plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + age_at_mri + sex + DX2,
-                  data = TSPO_by_MA[["MA-"]])
+Model01 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + age_at_mri + sex + DX2,
+                  data = TSPO_by_MA[["MA-"]],
+                  show_visualizations = TRUE)
 
 ##### Model02 ####
-Model02 <- run_lm(plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + age_at_mri + sex + DX2,
-                  data = TSPO_by_MA[["MA+"]])
+Model02 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + age_at_mri + sex + DX2,
+                  data = TSPO_by_MA[["MA+"]],
+                  show_visualizations = TRUE)
 
 ##### Model03 ####
-Model03 <- run_lm(plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z*MA_positivity + age_at_mri + sex + DX2,
-                  data = TSPO_PrimarySample)
+Model03 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z*MA_positivity + age_at_mri + sex + DX2,
+                  data = TSPO_PrimarySample,
+                  show_visualizations = TRUE)
 
 ##### Model04 ####
 Model04 <- run_lm(
      plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z*PBR_PCC_z + age_at_mri + sex + DX2,
-     data = TSPO_PrimarySample,
+     data = TSPO_PrimarySample, 
+     show_visualizations = TRUE,
      visreg_args = list(
           x = "NeoctxAZD_SUVR_z",
           y = "PBR_PCC_z",
@@ -237,18 +242,6 @@ Model04 <- run_lm(
                                    "#3B485F", "#2A3345", "#070A0D"))(200)
      )
 )
-
-##### Model05 ####
-Model05 <- lm(plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + age_at_mri + sex + DX2, data = TSPO_PrimarySample)
-
-##### Model06 ####
-Model06 <- lm(plasmaGFAPpgmL_normalized_z ~ PBR_PCC_z + age_at_mri + sex + DX2, data = TSPO_PrimarySample)
-
-##### Model07 ####
-Model07 <- lm(plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + PBR_PCC_z + age_at_mri + sex + DX2, data = TSPO_PrimarySample)
-
-##### Model08 ####
-Model08 <- lm(plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z*PBR_PCC_z + age_at_mri + sex + DX2, data = TSPO_PrimarySample)
 
 ##### 5.2. FDR-adjusted P-values####
 
@@ -269,6 +262,26 @@ p_values_01 <- sapply(seq_along(models), function(i) {
 # FDR adjustment
 adjusted_p_values_01 <- p.adjust(p_values_01, method = "fdr")
 adjusted_p_values_01
+
+##### Model05 ####
+Model05 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + age_at_mri + sex + DX2,
+                  data = TSPO_PrimarySample,
+                  show_visualizations = FALSE)
+
+##### Model06 ####
+Model06 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ PBR_PCC_z + age_at_mri + sex + DX2,
+                  data = TSPO_PrimarySample,
+                  show_visualizations = FALSE)
+
+##### Model07 ####
+Model07 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + PBR_PCC_z + age_at_mri + sex + DX2,
+                  data = TSPO_PrimarySample,
+                  show_visualizations = FALSE)
+
+##### Model08 ####
+Model08 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z*PBR_PCC_z + age_at_mri + sex + DX2,
+                  data = TSPO_PrimarySample,
+                  show_visualizations = FALSE)
 
 ##### 5.3. ANOVA comparisons ####
 
@@ -377,6 +390,7 @@ Model11  <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z * MA
 Model12  <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z * PBR_DKT_difference_composite_z +
                         age_at_mri + sex + DX2,
                    data = TSPO_PrimarySample,
+                   show_visualizations = FALSE,
                    visreg_args = list(
                         xvar = "NeoctxAZD_SUVR_z",
                         yvar = "PBR_DKT_difference_composite_z",
@@ -388,7 +402,7 @@ Model12  <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z * PB
                    )
 )
 
-###### Scatter + Models for T Composite  ####
+###### Scatter - Models for T Composite  ####
 scatter03 <- scatter_plot(
      data = TSPO_PrimarySample,
      group_var = "MA_positivity_DKT_T_composite"
@@ -415,6 +429,7 @@ Model15 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z * MA_
 Model16 <- run_lm(plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z * PBR_DKT_T_composite_z +
                        age_at_mri + sex + DX2,
                   TSPO_PrimarySample,
+                  show_visualizations = FALSE,
                   visreg_args = list(
                        xvar = "NeoctxAZD_SUVR_z",
                        yvar = "PBR_DKT_T_composite_z",

@@ -39,7 +39,7 @@ make_table1 <- function(vars, group, data, mean_sd = TRUE, overall = TRUE) {
      }
 }
 
-# Function for LM + Residual Plots
+# Function for LM + Diagnostic Plots
 run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL) {
      model <- lm(formula, data = data)
      
@@ -48,12 +48,13 @@ run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL
      print(confint(model))
      
      if(show_visualizations) {
-          # Residual plots
-          par(mfrow = c(1,3))
+          # Diagnostic plots
+          par(mfrow = c(1,4))
+          plot(model, which = 1, add.smooth = FALSE)
           hist(residuals(model), main = "Histogram of Residuals", xlab = "Residuals", freq = FALSE)
           qqnorm(residuals(model), main = "Q-Q Plot of Residuals")
           qqline(residuals(model), lwd = 1)
-          plot(model, which = 3)
+          plot(model, which = 3, add.smooth = FALSE)
           par(mfrow = c(1,1))
           
           # Optional 2D visreg plot
@@ -184,19 +185,23 @@ scatter_plot(TSPO_PrimarySample_ptau217, group_var = "MA_positivity")
 
 ##### Model01 ####
 Model01 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z + age_at_mri + sex + DX2,
-                  data = TSPO_PrimarySample_ptau217_by_MA[["MA-"]])
+                  data = TSPO_PrimarySample_ptau217_by_MA[["MA-"]],
+                  show_visualizations = TRUE)
 
 ##### Model02 ####
 Model02 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z + age_at_mri + sex + DX2,
-                  data = TSPO_PrimarySample_ptau217_by_MA[["MA+"]])
+                  data = TSPO_PrimarySample_ptau217_by_MA[["MA+"]],
+                  show_visualizations = TRUE)
 
 ##### Model03 ####
 Model03 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z*MA_positivity + age_at_mri + sex + DX2,
-                  data = TSPO_PrimarySample_ptau217)
+                  data = TSPO_PrimarySample_ptau217,
+                  show_visualizations = TRUE)
 
 ##### Model04 ####
 Model04 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z*PBR_PCC_z + age_at_mri + sex + DX2, 
                   data = TSPO_PrimarySample_ptau217,
+                  show_visualizations = TRUE,
                   visreg_args = list(xvar = "plasmaGFAPpgmL_normalized_z",
                                      yvar = "PBR_PCC_z", nn = 350,
                                      plot.type = "image",
@@ -227,19 +232,23 @@ adjusted_p_values_02
 
 ##### Model05 ####
 Model05 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z + age_at_mri + sex + DX2,
-                  data = TSPO_PrimarySample_ptau217)
+                  data = TSPO_PrimarySample_ptau217,
+                  show_visualizations = FALSE)
 
 ##### Model06 ####
 Model06 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ PBR_PCC_z + age_at_mri + sex + DX2,
-                  data = TSPO_PrimarySample_ptau217)
+                  data = TSPO_PrimarySample_ptau217,
+                  show_visualizations = FALSE)
 
 ##### Model07 ####
 Model07 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z + PBR_PCC_z + age_at_mri + sex + DX2,
-                  data = TSPO_PrimarySample_ptau217)
+                  data = TSPO_PrimarySample_ptau217,
+                  show_visualizations = FALSE)
 
 ##### Model08 ####
 Model08 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z * PBR_PCC_z + age_at_mri + sex + DX2,
-                  data = TSPO_PrimarySample_ptau217)
+                  data = TSPO_PrimarySample_ptau217,
+                  show_visualizations = FALSE)
 
 anova(Model08, Model05)
 anova(Model08, Model06)

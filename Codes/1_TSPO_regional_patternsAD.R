@@ -55,8 +55,7 @@ plot_grouped_bar <- function(data, var, ylab_text, ylim_range) {
           geom_errorbar(aes(ymin = Mean, ymax = Mean + SD), width = 0.2) +
           geom_point(data = data, aes(y = .data[[var]], color = Clinical_Group_CU_AD),
                      position = position_jitter(width = 0.2), size = 5.5) +
-          theme_minimal(base_size = 17) +
-          theme(panel.grid.major = element_blank(),
+          theme(panel.grid.major.y = element_line(colour = "gray", size = 0.2),
                 panel.grid.minor = element_blank(),
                 axis.line = element_line(colour = "black", size = 0.2),
                 legend.position = "left") +
@@ -122,20 +121,28 @@ results_PBR <- run_multiple_regressions(
 )
 
 #### 6. Bar plots ####
+TSPO_signature_CUneg_ADpos$Clinical_Group_CU_AD <- factor(ifelse(test = TSPO_signature_CUneg_ADpos$Clinical_Group_CU_AD == "CU", 
+                                                                 yes = "CU AB-", no = "AD AB+"), levels = c("CU AB-", "AD AB+"))
 
-plot_grouped_bar(TSPO_signature_CUneg_ADpos, "PBR_PCC", 
-                 "TSPO PET SUVR (posterior cingulate cortex)", c(0.8, 1.8))
+plot_grouped_bar(data = TSPO_signature_CUneg_ADpos,
+                 var = "PBR_PCC",
+                 ylab_text = "TSPO PET SUVR (posterior cingulate cortex)",
+                 ylim_range = c(0.8, 1.8))
 
-plot_grouped_bar(TSPO_signature_CUneg_ADpos, "PBR_DKT_difference_composite", 
-                 "TSPO PET SUVR (difference-derived composite brain region)", c(0.8, 1.8))
+plot_grouped_bar(data = TSPO_signature_CUneg_ADpos,
+                 var = "PBR_DKT_difference_composite", 
+                 ylab_text = "TSPO PET SUVR (difference-derived composite brain region)",
+                 ylim_range = c(0.8, 1.8))
 
-plot_grouped_bar(TSPO_signature_CUneg_ADpos, "PBR_DKT_T_composite", 
-                 "TSPO PET SUVR (T-derived composite brain region)", c(0.8, 1.6))
+plot_grouped_bar(data = TSPO_signature_CUneg_ADpos,
+                 var = "PBR_DKT_T_composite", 
+                 ylab_text = "TSPO PET SUVR (T-derived composite brain region)",
+                 ylim_range = c(0.8, 1.6))
 
-#### 7. ANOVAs ####
+#### 7. Group Comparisons ####
 
-anova_results <- lapply(c("PBR_PCC", "PBR_DKT_difference_composite", "PBR_DKT_T_composite"), function(v) {
+group_comp_results <- lapply(c("PBR_PCC", "PBR_DKT_difference_composite", "PBR_DKT_T_composite"), function(v) {
      aov(as.formula(paste(v, "~ Clinical_Group_CU_AD + age_at_mri + sex")), data = TSPO_signature_CUneg_ADpos) |> summary()
 }) |> setNames(c("PCC", "Difference_composite", "T_composite"))
 
-anova_results
+group_comp_results

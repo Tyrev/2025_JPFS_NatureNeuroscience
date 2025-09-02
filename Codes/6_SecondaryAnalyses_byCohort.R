@@ -67,7 +67,7 @@ scatter_plot <- function(data, group_var, x = "centiloid", y = "plasmaGFAP_z",
           )
 }
 
-# Function for linear regression with summary and CI
+# Function for LM + Diagnostic Plots
 run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL) {
      model <- lm(formula, data = data)
      
@@ -76,12 +76,13 @@ run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL
      print(confint(model))
      
      if(show_visualizations) {
-          # Residual plots
-          par(mfrow = c(1,3))
+          # Diagnostic plots
+          par(mfrow = c(1,4))
+          plot(model, which = 1, add.smooth = FALSE)
           hist(residuals(model), main = "Histogram of Residuals", xlab = "Residuals", freq = FALSE)
           qqnorm(residuals(model), main = "Q-Q Plot of Residuals")
           qqline(residuals(model), lwd = 1)
-          plot(model, which = 3)
+          plot(model, which = 3, add.smooth = FALSE)
           par(mfrow = c(1,1))
           
           # Optional 2D visreg plot
@@ -146,15 +147,18 @@ scatter_plot(sTREM2_TRIAD, group_var = "MA_positivity", x = "Centiloid", y = "pl
 
 ##### Model01 ####
 Model01 <- run_lm(formula = plasmaGFAP_pgmL_normalized_z ~ Centiloid + age_at_mri + sex + DX2,
-                  data = sTREM2_TRIAD_by_MA[["MA-"]])
+                  data = sTREM2_TRIAD_by_MA[["MA-"]],
+                  show_visualizations = FALSE)
 
 ##### Model02 ####
 Model02 <- run_lm(formula = plasmaGFAP_pgmL_normalized_z ~ Centiloid + age_at_mri + sex + DX2,
-                  data = sTREM2_TRIAD_by_MA[["MA+"]])
+                  data = sTREM2_TRIAD_by_MA[["MA+"]],
+                  show_visualizations = FALSE)
 
 ##### Model03 ####
 Model03 <- run_lm(formula = plasmaGFAP_pgmL_normalized_z ~ Centiloid*MA_positivity + age_at_mri + sex + DX2,
-                  data = sTREM2_TRIAD)
+                  data = sTREM2_TRIAD,
+                  show_visualizations = FALSE)
 
 #### 2. WRAP ####
 
@@ -216,12 +220,15 @@ scatter_plot(sTREM2_WRAP, group_var = "MA_positivity", x = "centiloid", y = "Pla
 
 ##### Model04 ####
 Model04 <- run_lm(formula = PlasmaGFAP_pgmL_z ~ centiloid + AgeAtVisit + Gender + DX2,
-                  data = sTREM2_WRAP_by_MA[["MA-"]])
+                  data = sTREM2_WRAP_by_MA[["MA-"]],
+                  show_visualizations = FALSE)
 
 ##### Model05 ####
 Model05 <- run_lm(formula = PlasmaGFAP_pgmL_z ~ centiloid + AgeAtVisit + Gender + DX2,
-                  data = sTREM2_WRAP_by_MA[["MA+"]])
+                  data = sTREM2_WRAP_by_MA[["MA+"]],
+                  show_visualizations = FALSE)
 
 ##### Model06 ####
 Model06 <- run_lm(formula = PlasmaGFAP_pgmL_z ~ centiloid*MA_positivity + AgeAtVisit + Gender + DX2,
-                  data = sTREM2_WRAP)
+                  data = sTREM2_WRAP,
+                  show_visualizations = FALSE)

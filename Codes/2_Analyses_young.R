@@ -88,7 +88,7 @@ demographic_vars_strem2 <- c("age_at_mri", "sex", "years_of_education",
 make_table1(vars = demographic_vars_strem2, group = "DX2",
             data = sTREM2_young_TRIAD, mean_sd = FALSE, overall = TRUE)
 
-# PBR PCC distribution for TSPO young sTREM2
+# TSPO PET values
 mean(TSPO_young_sTREM2$PBR_PCC, na.rm = TRUE)
 sd(TSPO_young_sTREM2$PBR_PCC, na.rm = TRUE)
 
