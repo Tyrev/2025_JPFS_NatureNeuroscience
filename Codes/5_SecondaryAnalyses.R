@@ -55,12 +55,13 @@ run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL
           qqline(residuals(model), lwd = 1)
           plot(model, which = 3, add.smooth = FALSE)
           par(mfrow = c(1,1))
-          
-          # Optional 2D visreg plot
-          if(!is.null(visreg_args)) {
-               do.call(visreg2d, c(list(model), visreg_args))
-          }
      }
+     
+     # Optional 2D visreg plot
+     if(!is.null(visreg_args)) {
+          do.call(visreg2d, c(list(model), visreg_args))
+     }
+     
      return(model)
 }
 
@@ -122,14 +123,17 @@ make_table1(vars = c("age", "sex", "education_years", "APOE4_status",
             group = "MA_positivity", data = sTREM2_SecondarySample_Combined,
             mean_sd = FALSE, overall = TRUE)
 
-#### 3. Stratification ####
+#### 2. Stratification ####
 sTREM2_SecondarySample_Combined_by_MA <- sTREM2_SecondarySample_Combined %>%
      split(.$MA_positivity)
 
-#### 4. Scatterplot ####
-scatter_plot(sTREM2_SecondarySample_Combined, group_var = "MA_positivity")
+#### 3. Scatterplot ####
+scatter_plot(
+     data = sTREM2_SecondarySample_Combined,
+     group_var = "MA_positivity"
+)
 
-#### 5. Regressions ####
+#### 4. Regressions ####
 
 ##### Model01 ####
 Model01 <- run_lm(plasmaGFAP_z ~ centiloid + age + sex + DX2 + cohort,
@@ -157,7 +161,7 @@ Model04 <- run_lm(plasmaGFAP_z ~ centiloid*sTREM2_z + age + sex + DX2 + cohort,
                                                               "#C3CFE1","#94A4C0", "#5F7498", 
                                                               "#3B485F", "#2A3345", "#070A0D"))(200)))
 
-##### 5.1 ANOVA ####
+#### 5. ANOVA ####
 
 ##### Model05 ####
 Model05 <- run_lm(plasmaGFAP_z ~ centiloid + age + sex + DX2 + cohort,
@@ -185,38 +189,40 @@ anova(Model08, Model07)
 
 #### 6. Sensitivity/Exploratory Analyses ####
 
+##### Sex Effects ####
+
 # Stratify by MA and sex
 sTREM2_MAneg_sex <- sTREM2_SecondarySample_Combined_by_MA[["MA-"]] %>%
      split(.$sex)
 sTREM2_MApos_sex <- sTREM2_SecondarySample_Combined_by_MA[["MA+"]] %>%
      split(.$sex)
 
-##### Model09 ####
+###### Model09 ####
 Model09 <- run_lm(plasmaGFAP_z ~ centiloid*sex + age + DX2 + cohort,
                   data = sTREM2_SecondarySample_Combined_by_MA[["MA-"]],
                   show_visualizations = FALSE)
 
-##### Model10 ####
+###### Model10 ####
 Model10 <- run_lm(plasmaGFAP_z ~ centiloid + age + DX2 + cohort,
                   data = sTREM2_MAneg_sex[["F"]],
                   show_visualizations = FALSE)
 
-##### Model11 ####
+###### Model11 ####
 Model11 <- run_lm(plasmaGFAP_z ~ centiloid + age + DX2 + cohort,
                   data = sTREM2_MAneg_sex[["M"]],
                   show_visualizations = FALSE)
 
-##### Model12 ####
+###### Model12 ####
 Model12 <- run_lm(plasmaGFAP_z ~ centiloid*sex + age + DX2 + cohort,
                   data = sTREM2_SecondarySample_Combined_by_MA[["MA+"]],
                   show_visualizations = FALSE)
 
-##### Model13 ####
+###### Model13 ####
 Model13 <- run_lm(plasmaGFAP_z ~ centiloid + age + DX2 + cohort,
                   data = sTREM2_MApos_sex[["F"]],
                   show_visualizations = FALSE)
 
-##### Model14 ####
+###### Model14 ####
 Model14 <- run_lm(plasmaGFAP_z ~ centiloid + age + DX2 + cohort,
                   data = sTREM2_MApos_sex[["M"]],
                   show_visualizations = FALSE)

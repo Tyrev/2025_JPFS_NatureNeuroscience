@@ -77,7 +77,7 @@ factor_levels <- list(
      apoee4_status = c("Noncarrier", "Carrier"),
      AB_threshold = c("0", "1")
 )
-TSPO_PrimarySample <- set_factors(TSPO_signature_CUneg_ADpos, factor_levels)
+TSPO_signature_CUneg_ADpos <- set_factors(TSPO_signature_CUneg_ADpos, factor_levels)
 
 ##### Table ####
 
@@ -87,7 +87,7 @@ make_table1(vars = demographic_vars,
             data = TSPO_signature_CUneg_ADpos,
             mean_sd = FALSE)
 
-#### 4. TSPO regional patterns ####
+#### 2. TSPO regional patterns ####
 
 # Collect PBR
 continuous_vars <- c("PBR_HC", "PBR_ENTH", "PBR_AG", "PBR_THAL", "PBR_CAUD",
@@ -114,13 +114,14 @@ print(difference_table)
 # Calculate the 90th percentile
 print(quantile(difference_table$difference, probs = 0.9))
 
-#### 5. Regressions ####
+#### 3. Regressions ####
 
 results_PBR <- run_multiple_regressions(
      continuous_vars, "~ Clinical_Group_CU_AD + age_at_mri + sex", TSPO_signature_CUneg_ADpos
 )
+print(results_PBR)
 
-#### 6. Bar plots ####
+#### 4. Bar plots ####
 TSPO_signature_CUneg_ADpos$Clinical_Group_CU_AD <- factor(ifelse(test = TSPO_signature_CUneg_ADpos$Clinical_Group_CU_AD == "CU", 
                                                                  yes = "CU AB-", no = "AD AB+"), levels = c("CU AB-", "AD AB+"))
 
@@ -139,7 +140,7 @@ plot_grouped_bar(data = TSPO_signature_CUneg_ADpos,
                  ylab_text = "TSPO PET SUVR (T-derived composite brain region)",
                  ylim_range = c(0.8, 1.6))
 
-#### 7. Group Comparisons ####
+#### 5. Group Comparisons ####
 
 group_comp_results <- lapply(c("PBR_PCC", "PBR_DKT_difference_composite", "PBR_DKT_T_composite"), function(v) {
      aov(as.formula(paste(v, "~ Clinical_Group_CU_AD + age_at_mri + sex")), data = TSPO_signature_CUneg_ADpos) |> summary()

@@ -5,6 +5,7 @@ library(dplyr)
 library(ggplot2)
 library(stats)
 library(grid)
+library(tidyr)
 
 #### Helper Functions ####
 
@@ -95,7 +96,7 @@ run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL
 
 #### 1. TRIAD ####
 
-###### Load data ####
+#### 1.1. Load data ####
 sTREM2_TRIAD <- read_excel("Input_Tables/sTREM2_SecondarySample_TRIAD.xlsx")
 
 # Apply factor levels
@@ -106,18 +107,6 @@ factor_levels_TRIAD <- list(
      MA_positivity = c("MA-", "MA+")
 )
 sTREM2_TRIAD <- set_factors(sTREM2_TRIAD, factor_levels_TRIAD)
-
-##### Table ####
-sTREM2_SecondarySample_TRIAD_filtered <- sTREM2_TRIAD %>%
-     filter(DX2 == "CU", age_at_mri >= 65, age_at_mri < 76)
-
-make_table1(
-     vars = c("sTREM2", "MA_positivity", "age_at_mri"),
-     group = "DX2",
-     data = sTREM2_SecondarySample_TRIAD_filtered,
-     mean_sd = FALSE,
-     overall = TRUE
-)
 
 #### 1.2. Time differences between biomarkers #### 
 # List of time-difference columns
@@ -137,13 +126,30 @@ time_diff_summary <- sTREM2_TRIAD %>%
      )
 time_diff_summary
 
-#### 1.3. Stratification ####
+#### 1.3. Table ####
+sTREM2_SecondarySample_TRIAD_filtered <- sTREM2_TRIAD %>%
+     filter(DX2 == "CU", age_at_mri >= 65, age_at_mri < 76)
+
+make_table1(
+     vars = c("sTREM2", "MA_positivity", "age_at_mri"),
+     group = "DX2",
+     data = sTREM2_SecondarySample_TRIAD_filtered,
+     mean_sd = FALSE,
+     overall = TRUE
+)
+
+#### 1.4. Stratification ####
 sTREM2_TRIAD_by_MA <- sTREM2_TRIAD %>% split(.$MA_positivity)
 
-#### 1.4. Scatterplot ####
-scatter_plot(sTREM2_TRIAD, group_var = "MA_positivity", x = "Centiloid", y = "plasmaGFAP_pgmL_normalized_z")
+#### 1.5. Scatterplot ####
+scatter_plot(
+     data = sTREM2_TRIAD,
+     group_var = "MA_positivity",
+     x = "Centiloid",
+     y = "plasmaGFAP_pgmL_normalized_z"
+)
 
-#### 1.5. Regressions ####
+#### 1.6. Regressions ####
 
 ##### Model01 ####
 Model01 <- run_lm(formula = plasmaGFAP_pgmL_normalized_z ~ Centiloid + age_at_mri + sex + DX2,
@@ -162,7 +168,7 @@ Model03 <- run_lm(formula = plasmaGFAP_pgmL_normalized_z ~ Centiloid*MA_positivi
 
 #### 2. WRAP ####
 
-###### Load data ####
+#### 2.1. Load data ####
 sTREM2_WRAP <- read_excel("Input_Tables/sTREM2_SecondarySample_WRAP.xlsx")
 
 # Apply factor levels
@@ -175,19 +181,6 @@ factor_levels_WRAP <- list(
      MA_positivity = c("MA-", "MA+")
 )
 sTREM2_WRAP <- set_factors(sTREM2_WRAP, factor_levels_WRAP)
-
-##### Table ####
-sTREM2_WRAP_filtered <- sTREM2_WRAP %>%
-     filter(DX2 == "CU", AgeAtVisit >= 65, AgeAtVisit < 76)
-
-make_table1(
-     vars = c("sTREM2", "MA_positivity", "AgeAtVisit"),
-     group = "DX2",
-     data = sTREM2_WRAP_filtered,
-     mean_sd = FALSE,
-     overall = TRUE
-)
-quantile(sTREM2_WRAP_filtered$sTREM2_adj, probs = 0.423, type = 7)
 
 #### 2.2. Time differences between biomarkers #### 
 time_diff_cols <- c("Correct_Difference_age_abPET_sTREM2",
@@ -206,17 +199,26 @@ time_diff_summary <- sTREM2_WRAP %>%
      )
 time_diff_summary
 
-# Batch adjustment for sTREM2
+#### 2.3. Batch adjustment ####
 Model_adj <- lm(sTREM2 ~ Batch, data = sTREM2_WRAP)
 sTREM2_WRAP$sTREM2_adj <- resid(Model_adj) + mean(sTREM2_WRAP$sTREM2, na.rm = TRUE)
 
-#### 2.3. Stratification ####
+#### 2.4. Percentile Computation ####
+sTREM2_WRAP_filtered <- sTREM2_WRAP %>%
+     filter(DX2 == "CU", AgeAtVisit >= 65, AgeAtVisit < 76)
+
+triad_ecdf <- ecdf(sTREM2_SecondarySample_TRIAD_filtered$sTREM2)
+triad_ecdf(2524.014) ## 0.423
+
+quantile(sTREM2_WRAP_filtered$sTREM2_adj, probs = 0.423, type = 7)
+
+#### 2.5. Stratification ####
 sTREM2_WRAP_by_MA <- sTREM2_WRAP %>% split(.$MA_positivity)
 
-#### 2.4. Scatterplot ####
+#### 2.6. Scatterplot ####
 scatter_plot(sTREM2_WRAP, group_var = "MA_positivity", x = "centiloid", y = "PlasmaGFAP_pgmL_z", xlim = c(-15, 110))
 
-#### 2.5. Regressions ####
+#### 2.7. Regressions ####
 
 ##### Model04 ####
 Model04 <- run_lm(formula = PlasmaGFAP_pgmL_z ~ centiloid + AgeAtVisit + Gender + DX2,

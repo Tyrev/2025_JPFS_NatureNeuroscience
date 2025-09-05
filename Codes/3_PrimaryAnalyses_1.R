@@ -57,12 +57,13 @@ run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL
           qqline(residuals(model), lwd = 1)
           plot(model, which = 3, add.smooth = FALSE)
           par(mfrow = c(1,1))
-          
-          # Optional 2D visreg plot
-          if(!is.null(visreg_args)) {
-               do.call(visreg2d, c(list(model), visreg_args))
-          }
      }
+     
+     # Optional 2D visreg plot
+     if(!is.null(visreg_args)) {
+          do.call(visreg2d, c(list(model), visreg_args))
+     }
+     
      return(model)
 }
 
@@ -81,11 +82,11 @@ run_region_regressions <- function(data, regions, outcome_y, interaction_var = N
           
           # Extract rows of interest
           if (is.null(interaction_var)) {
-               model_tidy <- model_tidy[model_tidy$term == region, c("term", "estimate", "p.value")]
+               model_tidy <- model_tidy[model_tidy$term == region, c("term", "estimate", "p.value","statistic")]
           } else {
                # Only keep interaction term(s)
                interaction_pattern <- paste0(region, ":")
-               model_tidy <- model_tidy[grep(interaction_pattern, model_tidy$term), c("term", "estimate", "p.value")]
+               model_tidy <- model_tidy[grep(interaction_pattern, model_tidy$term), c("term", "estimate", "p.value","statistic")]
           }
           
           cbind(Region = region, model_tidy)
@@ -99,6 +100,7 @@ run_region_regressions <- function(data, regions, outcome_y, interaction_var = N
      # Rename
      colnames(results_df)[colnames(results_df) == "estimate"] <- "Coefficient"
      colnames(results_df)[colnames(results_df) == "p.value"] <- "P_Value"
+     colnames(results_df)[colnames(results_df) == "statistic"] <- "tvalue"
      
      return(results_df)
 }
@@ -204,11 +206,10 @@ TSPO_by_MA <- TSPO_PrimarySample %>%
      split(.$MA_positivity)
 
 #### 4. Scatter Plot #### 
-scatter01 <- scatter01 <- scatter_plot(
+scatter_plot(
      data = TSPO_PrimarySample,
      group_var = "MA_positivity"
 )
-print(scatter01)
 
 #### 5. "Overall" Regression Analyses ####
 
@@ -243,7 +244,7 @@ Model04 <- run_lm(
      )
 )
 
-##### 5.2. FDR-adjusted P-values####
+##### FDR-adjusted P-values####
 
 # Define models and coefficient names
 models <- list(Model01, Model02, Model03, Model04)
@@ -262,6 +263,8 @@ p_values_01 <- sapply(seq_along(models), function(i) {
 # FDR adjustment
 adjusted_p_values_01 <- p.adjust(p_values_01, method = "fdr")
 adjusted_p_values_01
+
+#### 6. ANOVA comparisons ####
 
 ##### Model05 ####
 Model05 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + age_at_mri + sex + DX2,
@@ -283,14 +286,12 @@ Model08 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z*PBR_P
                   data = TSPO_PrimarySample,
                   show_visualizations = FALSE)
 
-##### 5.3. ANOVA comparisons ####
-
 # ANOVA comparisons
 anova(Model08, Model05)
 anova(Model08, Model06)
 anova(Model08, Model07)
 
-#### 6. Region-wise regressions: Plasma GFAP ~ Aß PET (Binary MA) ####
+#### 7. Region-wise regressions: Plasma GFAP ~ Aß PET (Binary MA) ####
 NAV_brain_regions <- c(
      "NAV_HC_z", "NAV_ENTH_z", "NAV_AG_z", "NAV_THAL_z", "NAV_CAUD_z", "NAV_PUTA_z", "NAV_PALL_z",
      "NAV_ACUM_z", "NAV_cACC_z", "NAV_cMFC_z", "NAV_CUN_z", "NAV_FG_z", "NAV_IP_z", "NAV_infTC_z",
@@ -300,19 +301,19 @@ NAV_brain_regions <- c(
      "NAV_rmidFC_z", "NAV_SF_z", "NAV_SP_z", "NAV_supTC_z", "NAV_supraMG_z", "NAV_transTC_z", "NAV_insula_z"
 )
 
-##### 6.1 MA negative ####
+##### MA negative ####
 results_table_NAVregional_MAneg <- run_region_regressions(data = TSPO_by_MA[["MA-"]], 
                                                           regions = NAV_brain_regions,
                                                           outcome_y = "plasmaGFAPpgmL_normalized_z")
 print(results_table_NAVregional_MAneg)
 
-##### 6.2 MA positive ####
+##### MA positive ####
 results_table_NAVregional_MApos <- run_region_regressions(data = TSPO_by_MA[["MA+"]], 
                                                           regions = NAV_brain_regions,
                                                           outcome_y = "plasmaGFAPpgmL_normalized_z")
 print(results_table_NAVregional_MApos)
 
-#### 7. Region-wise regressions: Plasma GFAP ~ global Aß PET x TSPO PET #### 
+#### 8. Region-wise regressions: Plasma GFAP ~ global Aß PET x TSPO PET #### 
 PBR_brain_regions <- c(
      "PBR_HC_z", "PBR_ENTH_z", "PBR_AG_z", "PBR_THAL_z", "PBR_CAUD_z", "PBR_PUTA_z", "PBR_PALL_z",
      "PBR_ACUM_z", "PBR_cACC_z", "PBR_cMFC_z", "PBR_CUN_z", "PBR_FG_z", "PBR_IP_z", "PBR_infTC_z",
@@ -327,7 +328,7 @@ results_table_regionalPBR <- run_region_regressions(data = TSPO_PrimarySample,
                                                     outcome_y = "plasmaGFAPpgmL_normalized_z")
 print(results_table_regionalPBR)
 
-#### 8. Region-wise regressions: Tau PET ~ plasma GFAP (Binary MA) #### 
+#### 9. Region-wise regressions: Tau PET ~ plasma GFAP (Binary MA) #### 
 outcome_brain_regions_MK <- c(
      "MK_HC_z", "MK_ENTH_z", "MK_AG_z", "MK_THAL_z", "MK_CAUD_z", "MK_PUTA_z", "MK_PALL_z",
      "MK_ACUM_z", "MK_cACC_z", "MK_cMFC_z", "MK_CUN_z", "MK_FG_z", "MK_IP_z", "MK_infTC_z",
@@ -337,21 +338,21 @@ outcome_brain_regions_MK <- c(
      "MK_rmidFC_z", "MK_SF_z", "MK_SP_z", "MK_supTC_z", "MK_supraMG_z", "MK_transTC_z", "MK_insula_z"
 )
 
-##### 8.1 MA negative ####
+##### MA negative ####
 results_table_MAneg_MKregional <- run_region_regressions(data = TSPO_by_MA[["MA-"]],
                                                          regions = outcome_brain_regions_MK, 
                                                          outcome_y = "plasmaGFAPpgmL_normalized_z")
 print(results_table_MAneg_MKregional)
 
-##### 8.2 MA positive ####
+##### MA positive ####
 results_table_MApos_MKregional <- run_region_regressions(data = TSPO_by_MA[["MA+"]],
                                                          regions = outcome_brain_regions_MK, 
                                                          outcome_y = "plasmaGFAPpgmL_normalized_z")
 print(results_table_MApos_MKregional)
 
-#### 9. Sensitivity/Exploratory Analyses #### 
+#### 10. Sensitivity/Exploratory Analyses #### 
 
-##### 9.1 Other TSPO summary measures ####
+##### Other TSPO summary measures ####
 
 ###### Stratification #### 
 
@@ -441,7 +442,7 @@ Model16 <- run_lm(plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z * PBR_DKT_T_com
                   )
 )
 
-##### 9.2 Sex Effects ####
+##### Sex Effects ####
 
 ###### Model17 ####
 Model17 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z * sex + age_at_mri + DX2,
@@ -479,7 +480,7 @@ Model22 <- run_lm(formula = plasmaGFAPpgmL_normalized_z ~ NeoctxAZD_SUVR_z + age
                   data = TSPO_PrimarySample_MApos_SexSplit[["M"]],
                   show_visualizations = FALSE)
 
-##### 9.3 Including Outliers ####
+##### Including Outliers ####
 
 ###### Stratification #### 
 TSPO_PrimarySample_Outliers <- read_excel(

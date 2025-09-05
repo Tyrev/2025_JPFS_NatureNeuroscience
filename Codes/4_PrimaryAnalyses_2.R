@@ -6,6 +6,7 @@ library(ggplot2)
 library(visreg)
 library(broom)
 library(grid)
+library(tidyr)
 
 #### Helper Functions ####
 
@@ -56,12 +57,13 @@ run_lm <- function(formula, data, show_visualizations = TRUE, visreg_args = NULL
           qqline(residuals(model), lwd = 1)
           plot(model, which = 3, add.smooth = FALSE)
           par(mfrow = c(1,1))
-          
-          # Optional 2D visreg plot
-          if(!is.null(visreg_args)) {
-               do.call(visreg2d, c(list(model), visreg_args))
-          }
      }
+     
+     # Optional 2D visreg plot
+     if(!is.null(visreg_args)) {
+          do.call(visreg2d, c(list(model), visreg_args))
+     }
+     
      return(model)
 }
 
@@ -179,7 +181,10 @@ TSPO_PrimarySample_ptau217_by_MA <- TSPO_PrimarySample_ptau217 %>%
      split(.$MA_positivity)
 
 #### 4. Scatterplot ####
-scatter_plot(TSPO_PrimarySample_ptau217, group_var = "MA_positivity")
+scatter_plot(
+     data = TSPO_PrimarySample_ptau217, 
+     group_var = "MA_positivity"
+)
 
 #### 5. Regressions ####
 
@@ -209,7 +214,7 @@ Model04 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z*PB
                                                               "#C3CFE1","#94A4C0", "#5F7498", 
                                                               "#3B485F", "#2A3345", "#070A0D"))(200)))
 
-##### 5.1 FDR adjustment ####
+##### FDR adjustment ####
 # Define models and coefficient names
 models <- list(Model01, Model02, Model03, Model04)
 coef_names <- c(
@@ -228,7 +233,7 @@ p_values_02 <- sapply(seq_along(models), function(i) {
 adjusted_p_values_02 <- p.adjust(p_values_02, method = "fdr")
 adjusted_p_values_02
 
-##### 5.2 ANOVA ####
+#### 6. ANOVA ####
 
 ##### Model05 ####
 Model05 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z + age_at_mri + sex + DX2,
@@ -254,7 +259,7 @@ anova(Model08, Model05)
 anova(Model08, Model06)
 anova(Model08, Model07)
 
-#### 6. Regressions ####
+#### 7. SEM ####
 library(lavaan)
 library(semPlot)
 
@@ -263,15 +268,18 @@ SEM_model <- make_sem_model("MMSE", "temporal_meta_ROI_infCG")
 
 ##### Model09 ####
 Model09 <- run_sem(model_string = SEM_model,
-                 data = TSPO_PrimarySample_ptau217_by_MA[["MA-"]],
-                 group_label = "MA-")
+                   data = TSPO_PrimarySample_ptau217_by_MA[["MA-"]],
+                   group_label = "MA-")
 
 ##### Model10 ####
 Model10 <- run_sem(model_string = SEM_model,
-                 data = TSPO_PrimarySample_ptau217_by_MA[["MA+"]],
-                 group_label = "MA+")
+                   data = TSPO_PrimarySample_ptau217_by_MA[["MA+"]],
+                   group_label = "MA+")
 
-#### 7. Sensitivity/Exploratory Analyses ####
+#### 8. Sensitivity/Exploratory Analyses ####
+
+##### SEM - Additional Analyses ####
+
 # List of (outcome, predictor) combos
 sem_specs <- list(
      list(outcome = "MMSE", predictor = "Braak_12_SUVR_infCG"),
@@ -308,31 +316,39 @@ for (spec in sem_specs) {
      fits[[paste0("MA+", outcome, predictor)]] <- fit_pos
 }
 
-##### Model11 ####
+###### Model11 ####
 Model11 <- fits[[1]]
+summary(Model11)
 
-##### Model12 ####
+###### Model12 ####
 Model12 <- fits[[2]]
+summary(Model12)
 
-##### Model13 ####
+###### Model13 ####
 Model13 <- fits[[3]]
+summary(Model13)
 
-##### Model14 ####
+###### Model14 ####
 Model14 <- fits[[4]]
+summary(Model14)
 
-##### Model15 ####
+###### Model15 ####
 Model15 <- fits[[5]]
+summary(Model15)
 
-##### Model16 ####
+###### Model16 ####
 Model16 <- fits[[6]]
+summary(Model16)
 
-##### Model17 ####
+###### Model17 ####
 Model17 <- fits[[7]]
+summary(Model17)
 
-##### Model18 ####
+###### Model18 ####
 Model18 <- fits[[8]]
+summary(Model18)
 
-##### 8.3 Including Outliers ####
+##### Including Outliers ####
 
 ###### Stratification #### 
 TSPO_PrimarySample_ptau217_Outliers <- read_excel(
@@ -361,7 +377,7 @@ Model21 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z * 
                   data = TSPO_PrimarySample_ptau217_Outliers,
                   show_visualizations = FALSE)
 
-###### Model26 ####
+###### Model22 ####
 Model26 <- run_lm(formula = Ptau217_Conc_pgmL_z ~ plasmaGFAPpgmL_normalized_z * PBR_PCC_z + age_at_mri + sex + DX2,
                   data = TSPO_PrimarySample_ptau217_Outliers,
                   show_visualizations = FALSE)
