@@ -124,7 +124,11 @@ run_sem <- function(model_string, data, group_label = NULL) {
           cat("SEM Results for:", group_label, "\n")
      }
      cat("==============================================\n")
-     
+
+     return(fit)
+}
+
+show_sem_summary <- function(fit) {
      # Full summary
      print(summary(fit, standardized = TRUE, fit.measures = TRUE, rsq = TRUE, ci = TRUE))
      
@@ -133,14 +137,13 @@ run_sem <- function(model_string, data, group_label = NULL) {
      
      # Standardized paths
      print(standardizedSolution(fit, type = "std.all"))
-     
-     return(fit)
 }
 
 #### 1. TSPO_PrimarySample_ptau217 ####
 
 ###### Load data ####
-TSPO_PrimarySample_ptau217 <- read_excel("Input_Tables/TSPO_PrimarySample_ptau217.xlsx")
+TSPO_PrimarySample_ptau217 <- read_excel(path = "Input_Tables/TSPO_PrimarySample_ptau217.xlsx",
+                                         na = "NA")
 
 # Apply factor levels
 factor_levels <- list(
@@ -270,11 +273,13 @@ SEM_model <- make_sem_model("MMSE", "temporal_meta_ROI_infCG")
 Model09 <- run_sem(model_string = SEM_model,
                    data = TSPO_PrimarySample_ptau217_by_MA[["MA-"]],
                    group_label = "MA-")
+show_sem_summary(Model09)
 
 ##### Model10 ####
 Model10 <- run_sem(model_string = SEM_model,
                    data = TSPO_PrimarySample_ptau217_by_MA[["MA+"]],
                    group_label = "MA+")
+show_sem_summary(Model10)
 
 #### 8. Sensitivity/Exploratory Analyses ####
 
@@ -288,15 +293,19 @@ sem_specs <- list(
      list(outcome = "Memory_composite_score", predictor = "temporal_meta_ROI_infCG")
 )
 
-# Drop missing values for Memory_composite_score beforehand
-TSPO_PrimarySample_ptau217_by_MA[["MA-"]] <- TSPO_PrimarySample_ptau217_by_MA[["MA-"]] %>%
-     filter(!is.na(Memory_composite_score))
-TSPO_PrimarySample_ptau217_by_MA[["MA+"]] <- TSPO_PrimarySample_ptau217_by_MA[["MA+"]] %>%
-     filter(!is.na(Memory_composite_score))
-
 # Run all SEMs
 fits <- list()
 for (spec in sem_specs) {
+     
+     sem_by_MA_input <- TSPO_PrimarySample_ptau217_by_MA
+     if(spec$outcome == "Memory_composite_score") {
+          # Drop missing values for Memory_composite_score beforehand
+          sem_by_MA_input[["MA-"]] <- sem_by_MA_input[["MA-"]] %>%
+               filter(!is.na(Memory_composite_score))
+          sem_by_MA_input[["MA+"]] <- sem_by_MA_input[["MA+"]] %>%
+               filter(!is.na(Memory_composite_score))
+     }
+     
      outcome <- spec$outcome
      predictor <- spec$predictor
      model_string <- make_sem_model(outcome, predictor)
@@ -318,35 +327,35 @@ for (spec in sem_specs) {
 
 ###### Model11 ####
 Model11 <- fits[[1]]
-summary(Model11)
+show_sem_summary(Model11)
 
 ###### Model12 ####
 Model12 <- fits[[2]]
-summary(Model12)
+show_sem_summary(Model12)
 
 ###### Model13 ####
 Model13 <- fits[[3]]
-summary(Model13)
+show_sem_summary(Model13)
 
 ###### Model14 ####
 Model14 <- fits[[4]]
-summary(Model14)
+show_sem_summary(Model14)
 
 ###### Model15 ####
 Model15 <- fits[[5]]
-summary(Model15)
+show_sem_summary(Model15)
 
 ###### Model16 ####
 Model16 <- fits[[6]]
-summary(Model16)
+show_sem_summary(Model16)
 
 ###### Model17 ####
 Model17 <- fits[[7]]
-summary(Model17)
+show_sem_summary(Model17)
 
 ###### Model18 ####
 Model18 <- fits[[8]]
-summary(Model18)
+show_sem_summary(Model18)
 
 ##### Including Outliers ####
 
